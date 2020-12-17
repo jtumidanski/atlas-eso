@@ -42,9 +42,8 @@ public class EquipmentDataBuilder extends RecordBuilder<EquipmentData, Equipment
 
    @Override
    public EquipmentData construct() {
-      return new EquipmentData(id, itemId, strength, dexterity, intelligence, luck, hp, mp, weaponAttack, weaponDefense,
-            magicAttack,
-            magicDefense, accuracy, avoidability, hands, speed, jump, slots);
+      return new EquipmentData(id, itemId, strength, dexterity, intelligence, luck, hp, mp, weaponAttack, magicAttack,
+            weaponDefense, magicDefense, accuracy, avoidability, hands, speed, jump, slots);
    }
 
    @Override
