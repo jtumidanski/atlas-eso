@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import com.atlas.eso.builder.EquipmentDataBuilder;
 import com.atlas.eso.database.administrator.EquipmentAdministrator;
+import com.atlas.eso.database.provider.EquipmentProvider;
 import com.atlas.eso.model.EquipmentData;
 import com.atlas.iis.attribute.EquipmentAttributes;
 import com.atlas.shared.rest.RestService;
@@ -73,5 +74,9 @@ public final class EquipmentProcessor {
       if (value != null) {
          setter.accept(value);
       }
+   }
+
+   public static Optional<EquipmentData> get(int id) {
+      return Connection.instance().element(entityManager -> EquipmentProvider.get(entityManager, id));
    }
 }

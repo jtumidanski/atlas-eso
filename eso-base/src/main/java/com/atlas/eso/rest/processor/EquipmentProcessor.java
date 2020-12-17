@@ -20,4 +20,11 @@ public final class EquipmentProcessor {
             .map(Mappers::singleOkResult)
             .orElse(new ResultBuilder(Response.Status.FORBIDDEN));
    }
+
+   public static ResultBuilder get(int id) {
+      return com.atlas.eso.processor.EquipmentProcessor.get(id)
+            .map(ResultObjectFactory::create)
+            .map(Mappers::singleOkResult)
+            .orElse(new ResultBuilder(Response.Status.FORBIDDEN));
+   }
 }
