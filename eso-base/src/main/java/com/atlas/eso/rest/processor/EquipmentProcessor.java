@@ -17,7 +17,7 @@ public final class EquipmentProcessor {
             attributes.magicAttack(), attributes.magicDefense(), attributes.accuracy(), attributes.avoidability(),
             attributes.speed(), attributes.jump(), attributes.hp(), attributes.mp(), attributes.slots())
             .map(ResultObjectFactory::create)
-            .map(Mappers::singleOkResult)
+            .map(Mappers::singleCreatedResult)
             .orElse(new ResultBuilder(Response.Status.FORBIDDEN));
    }
 
