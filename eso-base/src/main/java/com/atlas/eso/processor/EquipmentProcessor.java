@@ -8,7 +8,7 @@ import com.atlas.eso.database.administrator.EquipmentAdministrator;
 import com.atlas.eso.database.provider.EquipmentProvider;
 import com.atlas.eso.model.EquipmentData;
 import com.atlas.iis.attribute.EquipmentAttributes;
-import com.atlas.shared.rest.RestService;
+import com.atlas.iis.constant.RestConstants;
 import com.atlas.shared.rest.UriBuilder;
 
 import database.Connection;
@@ -24,7 +24,7 @@ public final class EquipmentProcessor {
                                                 Integer jump, Integer hp, Integer mp, Integer slots) {
       EquipmentDataBuilder equipmentBuilder = new EquipmentDataBuilder().setItemId(itemId);
 
-      UriBuilder.service(RestService.ITEM_INFORMATION)
+      UriBuilder.service(RestConstants.SERVICE)
             .pathParam("equipment", itemId)
             .getRestClient(EquipmentAttributes.class)
             .getWithResponse()
