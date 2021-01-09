@@ -15,7 +15,7 @@ COPY eso-model/src eso-model/src
 COPY eso-base/src eso-base/src
 COPY eso-database/src eso-database/src
 
-RUN mvn install
+RUN mvn install -Prunnable
 
 FROM openjdk:14-ea-jdk-alpine
 USER root
