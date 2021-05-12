@@ -1,11 +1,10 @@
 package equipment
 
 import (
-	"atlas-eso/domain"
 	"gorm.io/gorm"
 )
 
-func GetById(db *gorm.DB, id uint32) (*domain.Equipment, error) {
+func GetById(db *gorm.DB, id uint32) (*Model, error) {
 	var result equipment
 	err := db.First(&result, id).Error
 	if err != nil {

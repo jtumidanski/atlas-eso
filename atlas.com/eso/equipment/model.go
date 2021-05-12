@@ -1,6 +1,6 @@
-package domain
+package equipment
 
-type Equipment struct {
+type Model struct {
 	id            uint32
 	itemId        uint32
 	strength      uint16
@@ -21,79 +21,79 @@ type Equipment struct {
 	slots         uint16
 }
 
-func (e Equipment) Id() uint32 {
+func (e Model) Id() uint32 {
 	return e.id
 }
 
-func (e Equipment) ItemId() uint32 {
+func (e Model) ItemId() uint32 {
 	return e.itemId
 }
 
-func (e Equipment) Strength() uint16 {
+func (e Model) Strength() uint16 {
 	return e.strength
 }
 
-func (e Equipment) Dexterity() uint16 {
+func (e Model) Dexterity() uint16 {
 	return e.dexterity
 }
 
-func (e Equipment) Intelligence() uint16 {
+func (e Model) Intelligence() uint16 {
 	return e.intelligence
 }
 
-func (e Equipment) Luck() uint16 {
+func (e Model) Luck() uint16 {
 	return e.luck
 }
 
-func (e Equipment) HP() uint16 {
+func (e Model) HP() uint16 {
 	return e.hp
 }
 
-func (e Equipment) MP() uint16 {
+func (e Model) MP() uint16 {
 	return e.mp
 }
 
-func (e Equipment) WeaponAttack() uint16 {
+func (e Model) WeaponAttack() uint16 {
 	return e.weaponAttack
 }
 
-func (e Equipment) MagicAttack() uint16 {
+func (e Model) MagicAttack() uint16 {
 	return e.magicAttack
 }
 
-func (e Equipment) WeaponDefense() uint16 {
+func (e Model) WeaponDefense() uint16 {
 	return e.weaponDefense
 }
 
-func (e Equipment) MagicDefense() uint16 {
+func (e Model) MagicDefense() uint16 {
 	return e.magicDefense
 }
 
-func (e Equipment) Accuracy() uint16 {
+func (e Model) Accuracy() uint16 {
 	return e.accuracy
 }
 
-func (e Equipment) Avoidability() uint16 {
+func (e Model) Avoidability() uint16 {
 	return e.avoidability
 }
 
-func (e Equipment) Hands() uint16 {
+func (e Model) Hands() uint16 {
 	return e.hands
 }
 
-func (e Equipment) Speed() uint16 {
+func (e Model) Speed() uint16 {
 	return e.speed
 }
 
-func (e Equipment) Jump() uint16 {
+func (e Model) Jump() uint16 {
 	return e.jump
 }
 
-func (e Equipment) Slots() uint16 {
+func (e Model) Slots() uint16 {
 	return e.slots
 }
 
-type equipmentBuilder struct {
+type ModelBuilder struct {
 	id            uint32
 	itemId        uint32
 	strength      uint16
@@ -114,97 +114,97 @@ type equipmentBuilder struct {
 	slots         uint16
 }
 
-func NewEquipmentBuilder(id uint32) *equipmentBuilder {
-	return &equipmentBuilder{id: id}
+func NewBuilder(id uint32) *ModelBuilder {
+	return &ModelBuilder{id: id}
 }
 
-func (e *equipmentBuilder) SetItemId(itemId uint32) *equipmentBuilder {
+func (e *ModelBuilder) SetItemId(itemId uint32) *ModelBuilder {
 	e.itemId = itemId
 	return e
 }
 
-func (e *equipmentBuilder) SetStrength(strength uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetStrength(strength uint16) *ModelBuilder {
 	e.strength = strength
 	return e
 }
 
-func (e *equipmentBuilder) SetDexterity(dexterity uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetDexterity(dexterity uint16) *ModelBuilder {
 	e.dexterity = dexterity
 	return e
 }
 
-func (e *equipmentBuilder) SetIntelligence(intelligence uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetIntelligence(intelligence uint16) *ModelBuilder {
 	e.intelligence = intelligence
 	return e
 }
 
-func (e *equipmentBuilder) SetLuck(luck uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetLuck(luck uint16) *ModelBuilder {
 	e.luck = luck
 	return e
 }
 
-func (e *equipmentBuilder) SetHp(hp uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetHp(hp uint16) *ModelBuilder {
 	e.hp = hp
 	return e
 }
 
-func (e *equipmentBuilder) SetMp(mp uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetMp(mp uint16) *ModelBuilder {
 	e.mp = mp
 	return e
 }
 
-func (e *equipmentBuilder) SetWeaponAttack(weaponAttack uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetWeaponAttack(weaponAttack uint16) *ModelBuilder {
 	e.weaponAttack = weaponAttack
 	return e
 }
 
-func (e *equipmentBuilder) SetMagicAttack(magicAttack uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetMagicAttack(magicAttack uint16) *ModelBuilder {
 	e.magicAttack = magicAttack
 	return e
 }
 
-func (e *equipmentBuilder) SetWeaponDefense(weaponDefense uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetWeaponDefense(weaponDefense uint16) *ModelBuilder {
 	e.weaponDefense = weaponDefense
 	return e
 }
 
-func (e *equipmentBuilder) SetMagicDefense(magicDefense uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetMagicDefense(magicDefense uint16) *ModelBuilder {
 	e.magicDefense = magicDefense
 	return e
 }
 
-func (e *equipmentBuilder) SetAccuracy(accuracy uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetAccuracy(accuracy uint16) *ModelBuilder {
 	e.accuracy = accuracy
 	return e
 }
 
-func (e *equipmentBuilder) SetAvoidability(avoidability uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetAvoidability(avoidability uint16) *ModelBuilder {
 	e.avoidability = avoidability
 	return e
 }
 
-func (e *equipmentBuilder) SetHands(hands uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetHands(hands uint16) *ModelBuilder {
 	e.hands = hands
 	return e
 }
 
-func (e *equipmentBuilder) SetSpeed(speed uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetSpeed(speed uint16) *ModelBuilder {
 	e.speed = speed
 	return e
 }
 
-func (e *equipmentBuilder) SetJump(jump uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetJump(jump uint16) *ModelBuilder {
 	e.jump = jump
 	return e
 }
 
-func (e *equipmentBuilder) SetSlots(slots uint16) *equipmentBuilder {
+func (e *ModelBuilder) SetSlots(slots uint16) *ModelBuilder {
 	e.slots = slots
 	return e
 }
 
-func (e *equipmentBuilder) Build() Equipment {
-	return Equipment{
+func (e *ModelBuilder) Build() Model {
+	return Model{
 		id:            e.id,
 		itemId:        e.itemId,
 		strength:      e.strength,

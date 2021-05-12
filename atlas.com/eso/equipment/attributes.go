@@ -1,24 +1,24 @@
 package equipment
 
-type EquipmentInputDataContainer struct {
-	Data EquipmentData `json:"data"`
+type InputDataContainer struct {
+	Data DataBody `json:"data"`
 }
 
-type EquipmentDataContainer struct {
-	Data EquipmentData `json:"data"`
+type DataContainer struct {
+	Data DataBody `json:"data"`
 }
 
-type EquipmentListDataContainer struct {
-	Data []EquipmentData `json:"data"`
+type ListDataContainer struct {
+	Data []DataBody `json:"data"`
 }
 
-type EquipmentData struct {
-	Id         string              `json:"id"`
-	Type       string              `json:"type"`
-	Attributes EquipmentAttributes `json:"attributes"`
+type DataBody struct {
+	Id         string     `json:"id"`
+	Type       string     `json:"type"`
+	Attributes Attributes `json:"attributes"`
 }
 
-type EquipmentAttributes struct {
+type Attributes struct {
 	ItemId        uint32 `json:"itemId"`
 	Strength      uint16 `json:"strength"`
 	Dexterity     uint16 `json:"dexterity"`

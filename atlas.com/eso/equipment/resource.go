@@ -1,13 +1,10 @@
 package equipment
 
 import (
-	"atlas-eso/database/equipment"
-	"atlas-eso/domain"
-	"atlas-eso/processor"
 	"atlas-eso/rest/json"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -17,55 +14,69 @@ type GenericError struct {
 	Message string `json:"message"`
 }
 
-func CreateEquipment(l *log.Logger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
+func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		ei := &EquipmentInputDataContainer{}
+		ei := &InputDataContainer{}
 		err := json.FromJSON(ei, r.Body)
 		if err != nil {
-			l.Println("[ERROR] deserializing instruction", err)
+			l.WithError(err).Errorf("Deserializing instruction.")
 			rw.WriteHeader(http.StatusBadRequest)
-			json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Cannot write error response.")
+			}
 			return
 		}
 
 		att := ei.Data.Attributes
-		e, err := processor.CreateEquipment(db, att.ItemId, att.Strength, att.Dexterity, att.Intelligence, att.Luck,
+		e, err := CreateEquipment(l, db)(att.ItemId, att.Strength, att.Dexterity, att.Intelligence, att.Luck,
 			att.HP, att.MP, att.WeaponAttack, att.MagicAttack, att.WeaponDefense, att.MagicDefense, att.Accuracy,
 			att.Avoidability, att.Hands, att.Speed, att.Jump, att.Slots)
 		if err != nil {
+			l.WithError(err).Errorf("Cannot create equipment.")
 			rw.WriteHeader(http.StatusInternalServerError)
-			json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Cannot write error response.")
+			}
 			return
 		}
 
 		rw.WriteHeader(http.StatusCreated)
 		result := makeEquipmentResult(e)
-		json.ToJSON(result, rw)
+		err = json.ToJSON(result, rw)
+		if err != nil {
+			l.WithError(err).Errorf("Writing create equipment response.")
+		}
 	}
 }
 
-func GetEquipmentById(_ *log.Logger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
+func HandleGetEquipmentById(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		id := getEquipmentId(r)
+		id := getEquipmentId(l)(r)
 
-		e, err := equipment.GetById(db, id)
+		e, err := GetById(db, id)
 		if err != nil {
+			l.WithError(err).Errorf("Unable to retrieve equipment %d.", id)
 			rw.WriteHeader(http.StatusNotFound)
 			return
 		}
 
 		rw.WriteHeader(http.StatusOK)
 		result := makeEquipmentResult(e)
-		json.ToJSON(result, rw)
+		err = json.ToJSON(result, rw)
+		if err != nil {
+			l.WithError(err).Errorf("Unable to write get equipment by id response.")
+		}
 	}
 }
 
-func makeEquipmentResult(e *domain.Equipment) EquipmentDataContainer {
-	result := EquipmentDataContainer{
-		Data: EquipmentData{
+func makeEquipmentResult(e *Model) DataContainer {
+	result := DataContainer{
+		Data: DataBody{
 			Id:   strconv.FormatUint(uint64(e.Id()), 10),
 			Type: "com.atlas.eso.attribute.EquipmentAttributes",
-			Attributes: EquipmentAttributes{
+			Attributes: Attributes{
 				ItemId:        e.ItemId(),
 				Strength:      e.Strength(),
 				Dexterity:     e.Dexterity(),
@@ -89,12 +100,14 @@ func makeEquipmentResult(e *domain.Equipment) EquipmentDataContainer {
 	return result
 }
 
-func getEquipmentId(r *http.Request) uint32 {
-	vars := mux.Vars(r)
-	value, err := strconv.Atoi(vars["equipmentId"])
-	if err != nil {
-		log.Println("Error parsing characterId as uint32")
-		return 0
+func getEquipmentId(l logrus.FieldLogger) func(r *http.Request) uint32 {
+	return func(r *http.Request) uint32 {
+		vars := mux.Vars(r)
+		value, err := strconv.Atoi(vars["equipmentId"])
+		if err != nil {
+			l.WithError(err).Errorf("Error parsing characterId as uint32")
+			return 0
+		}
+		return uint32(value)
 	}
-	return uint32(value)
 }
