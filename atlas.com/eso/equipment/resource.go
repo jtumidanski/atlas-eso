@@ -14,6 +14,21 @@ type GenericError struct {
 	Message string `json:"message"`
 }
 
+func HandleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := getEquipmentId(l)(r)
+
+		err := DeleteById(l, db)(id)
+		if err != nil {
+			l.WithError(err).Errorf("Unable to delete equipment %d.", id)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ei := &InputDataContainer{}

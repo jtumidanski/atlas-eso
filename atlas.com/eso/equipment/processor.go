@@ -29,3 +29,9 @@ func CreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32, stre
 		}
 	}
 }
+
+func DeleteById(_ logrus.FieldLogger, db *gorm.DB) func(equipmentId uint32) error {
+	return func(equipmentId uint32) error {
+		return delete(db, equipmentId)
+	}
+}

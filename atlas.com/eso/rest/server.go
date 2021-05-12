@@ -24,6 +24,7 @@ func NewServer(l *logrus.Logger, db *gorm.DB) *Server {
 	eRouter.HandleFunc("", equipment.HandleCreateEquipment(l, db)).Methods(http.MethodPost)
 	eRouter.HandleFunc("/", equipment.HandleCreateEquipment(l, db)).Methods(http.MethodPost)
 	eRouter.HandleFunc("/{equipmentId}", equipment.HandleGetEquipmentById(l, db)).Methods(http.MethodGet)
+	eRouter.HandleFunc("/{equipmentId}", equipment.HandleDeleteEquipment(l, db)).Methods(http.MethodDelete)
 
 	w := l.Writer()
 	defer w.Close()
