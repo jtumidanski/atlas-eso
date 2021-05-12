@@ -29,6 +29,41 @@ func HandleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) func(w http.Respon
 	}
 }
 
+func HandleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
+	return func(rw http.ResponseWriter, r *http.Request) {
+		ei := &InputDataContainer{}
+		err := json.FromJSON(ei, r.Body)
+		if err != nil {
+			l.WithError(err).Errorf("Deserializing instruction.")
+			rw.WriteHeader(http.StatusBadRequest)
+			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Cannot write error response.")
+			}
+			return
+		}
+
+		att := ei.Data.Attributes
+		e, err := CreateRandomEquipment(l, db)(att.ItemId)
+		if err != nil {
+			l.WithError(err).Errorf("Cannot create equipment.")
+			rw.WriteHeader(http.StatusInternalServerError)
+			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Cannot write error response.")
+			}
+			return
+		}
+
+		rw.WriteHeader(http.StatusCreated)
+		result := makeEquipmentResult(e)
+		err = json.ToJSON(result, rw)
+		if err != nil {
+			l.WithError(err).Errorf("Writing create equipment response.")
+		}
+	}
+}
+
 func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		ei := &InputDataContainer{}

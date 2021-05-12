@@ -4,6 +4,8 @@ import (
 	"atlas-eso/rest/equipment_info"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"math"
+	"math/rand"
 )
 
 func CreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32, strength uint16, dexterity uint16, intelligence uint16, luck uint16,
@@ -28,6 +30,44 @@ func CreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32, stre
 				magicAttack, weaponDefense, magicDefense, accuracy, avoidability, hands, speed, jump, slots)
 		}
 	}
+}
+
+func CreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32) (*Model, error) {
+	return func(itemId uint32) (*Model, error) {
+		ea, err := equipment_info.EquipmentInfo().GetById(itemId)
+		if err != nil {
+			l.WithError(err).Errorf("Unable to get equipment information for %d.", itemId)
+			return nil, err
+		} else {
+			strength := getRandomStat(ea.Data().Attributes.Strength, 5)
+			dexterity := getRandomStat(ea.Data().Attributes.Dexterity, 5)
+			intelligence := getRandomStat(ea.Data().Attributes.Intelligence, 5)
+			luck := getRandomStat(ea.Data().Attributes.Luck, 5)
+			hp := getRandomStat(ea.Data().Attributes.HP, 10)
+			mp := getRandomStat(ea.Data().Attributes.MP, 10)
+			weaponAttack := getRandomStat(ea.Data().Attributes.WeaponAttack, 5)
+			magicAttack := getRandomStat(ea.Data().Attributes.MagicAttack, 5)
+			weaponDefense := getRandomStat(ea.Data().Attributes.WeaponDefense, 10)
+			magicDefense := getRandomStat(ea.Data().Attributes.MagicDefense, 10)
+			accuracy := getRandomStat(ea.Data().Attributes.Accuracy, 5)
+			avoidability := getRandomStat(ea.Data().Attributes.Avoidability, 5)
+			hands := getRandomStat(ea.Data().Attributes.Hands, 5)
+			speed := getRandomStat(ea.Data().Attributes.Speed, 5)
+			jump := getRandomStat(ea.Data().Attributes.Jump, 5)
+			slots := getRandomStat(ea.Data().Attributes.Slots, 5)
+
+			return create(db, itemId, strength, dexterity, intelligence, luck, hp, mp, weaponAttack, magicAttack, weaponDefense, magicDefense, accuracy, avoidability, hands, speed, jump, slots)
+		}
+
+	}
+}
+
+func getRandomStat(defaultValue uint16, max uint16) uint16 {
+	if defaultValue == 0 {
+		return 0
+	}
+	maxRange := math.Min(math.Ceil(float64(defaultValue)*0.1), float64(max))
+	return uint16(float64(defaultValue)-maxRange) + uint16(math.Floor(rand.Float64()*(maxRange*2.0+1.0)))
 }
 
 func DeleteById(_ logrus.FieldLogger, db *gorm.DB) func(equipmentId uint32) error {
