@@ -54,7 +54,7 @@ func CreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32
 			hands := getRandomStat(ea.Data().Attributes.Hands, 5)
 			speed := getRandomStat(ea.Data().Attributes.Speed, 5)
 			jump := getRandomStat(ea.Data().Attributes.Jump, 5)
-			slots := getRandomStat(ea.Data().Attributes.Slots, 5)
+			slots := ea.Data().Attributes.Slots
 
 			return create(db, itemId, strength, dexterity, intelligence, luck, hp, mp, weaponAttack, magicAttack, weaponDefense, magicDefense, accuracy, avoidability, hands, speed, jump, slots)
 		}
