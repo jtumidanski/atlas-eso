@@ -2,6 +2,7 @@ package main
 
 import (
 	"atlas-eso/database"
+	"atlas-eso/equipment"
 	"atlas-eso/logger"
 	"atlas-eso/rest"
 	"context"
@@ -18,7 +19,7 @@ func main() {
 	wg := &sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(context.Background())
 
-	db := database.ConnectToDatabase(l)
+	db := database.Connect(l, database.SetMigrations(equipment.Migration))
 
 	rest.CreateRestService(l, db, ctx, wg)
 

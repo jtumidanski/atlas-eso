@@ -2,8 +2,8 @@ package equipment
 
 import "gorm.io/gorm"
 
-func Migration(db *gorm.DB) {
-	_ = db.AutoMigrate(&equipment{})
+func Migration(db *gorm.DB) error {
+	return db.AutoMigrate(&equipment{})
 }
 
 type equipment struct {
