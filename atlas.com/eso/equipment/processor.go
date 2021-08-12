@@ -15,7 +15,7 @@ func CreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32, stre
 		if strength == 0 && dexterity == 0 && intelligence == 0 && luck == 0 && hp == 0 && mp == 0 && weaponAttack == 0 && weaponDefense == 0 &&
 			magicAttack == 0 && magicDefense == 0 && accuracy == 0 && avoidability == 0 && hands == 0 && speed == 0 && jump == 0 &&
 			slots == 0 {
-			ea, err := equipment_info.EquipmentInfo().GetById(itemId)
+			ea, err := equipment_info.GetById(l)(itemId)
 			if err != nil {
 				l.WithError(err).Errorf("Unable to get equipment information for %d.", itemId)
 				return nil, err
@@ -34,7 +34,7 @@ func CreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32, stre
 
 func CreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) func(itemId uint32) (*Model, error) {
 	return func(itemId uint32) (*Model, error) {
-		ea, err := equipment_info.EquipmentInfo().GetById(itemId)
+		ea, err := equipment_info.GetById(l)(itemId)
 		if err != nil {
 			l.WithError(err).Errorf("Unable to get equipment information for %d.", itemId)
 			return nil, err
