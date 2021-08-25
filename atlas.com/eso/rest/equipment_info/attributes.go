@@ -1,10 +1,10 @@
 package equipment_info
 
-import "atlas-eso/rest/json"
+import "atlas-eso/rest/response"
 
 type EquipmentInfoDataContainer struct {
-	data     json.DataSegment
-	included json.DataSegment
+	data     response.DataSegment
+	included response.DataSegment
 }
 
 type EquipmentInfoData struct {
@@ -33,7 +33,7 @@ type EquipmentInfoAttributes struct {
 }
 
 func (a *EquipmentInfoDataContainer) UnmarshalJSON(data []byte) error {
-	d, i, err := json.UnmarshalRoot(data, json.MapperFunc(EmptyEquipmentInfoData))
+	d, i, err := response.UnmarshalRoot(data, response.MapperFunc(EmptyEquipmentInfoData))
 	if err != nil {
 		return err
 	}

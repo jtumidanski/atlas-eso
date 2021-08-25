@@ -1,7 +1,7 @@
 package equipment
 
 import (
-	"atlas-eso/rest/json"
+	"atlas-eso/json"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"

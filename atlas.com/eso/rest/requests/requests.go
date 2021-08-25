@@ -1,7 +1,7 @@
 package requests
 
 import (
-	json2 "atlas-eso/rest/json"
+	"atlas-eso/json"
 	"atlas-eso/retry"
 	"github.com/sirupsen/logrus"
 	"net/http"
@@ -51,7 +51,7 @@ func Get(l logrus.FieldLogger) func(url string, resp interface{}, configurators 
 }
 
 func processResponse(r *http.Response, rb interface{}) error {
-	err := json2.FromJSON(rb, r.Body)
+	err := json.FromJSON(rb, r.Body)
 	if err != nil {
 		return err
 	}
