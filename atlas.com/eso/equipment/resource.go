@@ -2,121 +2,146 @@ package equipment
 
 import (
 	"atlas-eso/json"
+	"atlas-eso/rest"
 	"github.com/gorilla/mux"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
 
+const (
+	CreateRandomEquipment = "create_random_equipment"
+	CreateEquipment       = "create_equipment"
+	GetEquipment          = "get_equipment"
+	DeleteEquipment       = "delete_equipment"
+)
+
+func InitResource(router *mux.Router, l logrus.FieldLogger, db *gorm.DB) {
+	eRouter := router.PathPrefix("/equipment").Subrouter()
+	eRouter.HandleFunc("", rest.RetrieveSpan(CreateRandomEquipment, HandleCreateRandomEquipment(l, db))).Queries("random", "{random}").Methods(http.MethodPost)
+	eRouter.HandleFunc("", rest.RetrieveSpan(CreateEquipment, HandleCreateEquipment(l, db))).Methods(http.MethodPost)
+	eRouter.HandleFunc("/{equipmentId}", rest.RetrieveSpan(GetEquipment, HandleGetEquipment(l, db))).Methods(http.MethodGet)
+	eRouter.HandleFunc("/{equipmentId}", rest.RetrieveSpan(DeleteEquipment, HandleDeleteEquipment(l, db))).Methods(http.MethodDelete)
+}
+
 // GenericError is a generic error message returned by a server
 type GenericError struct {
 	Message string `json:"message"`
 }
 
-func HandleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := getEquipmentId(l)(r)
+func HandleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+	return func(span opentracing.Span) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			id := getEquipmentId(l)(r)
 
-		err := DeleteById(l, db)(id)
-		if err != nil {
-			l.WithError(err).Errorf("Unable to delete equipment %d.", id)
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
-func HandleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		ei := &InputDataContainer{}
-		err := json.FromJSON(ei, r.Body)
-		if err != nil {
-			l.WithError(err).Errorf("Deserializing instruction.")
-			rw.WriteHeader(http.StatusBadRequest)
-			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			err := DeleteById(l, db)(id)
 			if err != nil {
-				l.WithError(err).Errorf("Cannot write error response.")
+				l.WithError(err).Errorf("Unable to delete equipment %d.", id)
+				w.WriteHeader(http.StatusNotFound)
+				return
 			}
-			return
-		}
 
-		att := ei.Data.Attributes
-		e, err := CreateRandomEquipment(l, db)(att.ItemId)
-		if err != nil {
-			l.WithError(err).Errorf("Cannot create equipment.")
-			rw.WriteHeader(http.StatusInternalServerError)
-			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
-			if err != nil {
-				l.WithError(err).Errorf("Cannot write error response.")
-			}
-			return
-		}
-
-		rw.WriteHeader(http.StatusCreated)
-		result := makeEquipmentResult(e)
-		err = json.ToJSON(result, rw)
-		if err != nil {
-			l.WithError(err).Errorf("Writing create equipment response.")
+			w.WriteHeader(http.StatusNoContent)
 		}
 	}
 }
 
-func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		ei := &InputDataContainer{}
-		err := json.FromJSON(ei, r.Body)
-		if err != nil {
-			l.WithError(err).Errorf("Deserializing instruction.")
-			rw.WriteHeader(http.StatusBadRequest)
-			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+func HandleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+	return func(span opentracing.Span) http.HandlerFunc {
+		return func(rw http.ResponseWriter, r *http.Request) {
+			ei := &InputDataContainer{}
+			err := json.FromJSON(ei, r.Body)
 			if err != nil {
-				l.WithError(err).Errorf("Cannot write error response.")
+				l.WithError(err).Errorf("Deserializing instruction.")
+				rw.WriteHeader(http.StatusBadRequest)
+				err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Cannot write error response.")
+				}
+				return
 			}
-			return
-		}
 
-		att := ei.Data.Attributes
-		e, err := CreateEquipment(l, db)(att.ItemId, att.Strength, att.Dexterity, att.Intelligence, att.Luck,
-			att.HP, att.MP, att.WeaponAttack, att.MagicAttack, att.WeaponDefense, att.MagicDefense, att.Accuracy,
-			att.Avoidability, att.Hands, att.Speed, att.Jump, att.Slots)
-		if err != nil {
-			l.WithError(err).Errorf("Cannot create equipment.")
-			rw.WriteHeader(http.StatusInternalServerError)
-			err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+			att := ei.Data.Attributes
+			e, err := CreateRandom(l, db, span)(att.ItemId)
 			if err != nil {
-				l.WithError(err).Errorf("Cannot write error response.")
+				l.WithError(err).Errorf("Cannot create equipment.")
+				rw.WriteHeader(http.StatusInternalServerError)
+				err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Cannot write error response.")
+				}
+				return
 			}
-			return
-		}
 
-		rw.WriteHeader(http.StatusCreated)
-		result := makeEquipmentResult(e)
-		err = json.ToJSON(result, rw)
-		if err != nil {
-			l.WithError(err).Errorf("Writing create equipment response.")
+			rw.WriteHeader(http.StatusCreated)
+			result := makeEquipmentResult(e)
+			err = json.ToJSON(result, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Writing create equipment response.")
+			}
 		}
 	}
 }
 
-func HandleGetEquipmentById(l logrus.FieldLogger, db *gorm.DB) func(http.ResponseWriter, *http.Request) {
-	return func(rw http.ResponseWriter, r *http.Request) {
-		id := getEquipmentId(l)(r)
+func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+	return func(span opentracing.Span) http.HandlerFunc {
+		return func(rw http.ResponseWriter, r *http.Request) {
+			ei := &InputDataContainer{}
+			err := json.FromJSON(ei, r.Body)
+			if err != nil {
+				l.WithError(err).Errorf("Deserializing instruction.")
+				rw.WriteHeader(http.StatusBadRequest)
+				err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Cannot write error response.")
+				}
+				return
+			}
 
-		e, err := GetById(db, id)
-		if err != nil {
-			l.WithError(err).Errorf("Unable to retrieve equipment %d.", id)
-			rw.WriteHeader(http.StatusNotFound)
-			return
+			att := ei.Data.Attributes
+			e, err := Create(l, db, span)(att.ItemId, att.Strength, att.Dexterity, att.Intelligence, att.Luck,
+				att.HP, att.MP, att.WeaponAttack, att.MagicAttack, att.WeaponDefense, att.MagicDefense, att.Accuracy,
+				att.Avoidability, att.Hands, att.Speed, att.Jump, att.Slots)
+			if err != nil {
+				l.WithError(err).Errorf("Cannot create equipment.")
+				rw.WriteHeader(http.StatusInternalServerError)
+				err = json.ToJSON(&GenericError{Message: err.Error()}, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Cannot write error response.")
+				}
+				return
+			}
+
+			rw.WriteHeader(http.StatusCreated)
+			result := makeEquipmentResult(e)
+			err = json.ToJSON(result, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Writing create equipment response.")
+			}
 		}
+	}
+}
 
-		rw.WriteHeader(http.StatusOK)
-		result := makeEquipmentResult(e)
-		err = json.ToJSON(result, rw)
-		if err != nil {
-			l.WithError(err).Errorf("Unable to write get equipment by id response.")
+func HandleGetEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+	return func(span opentracing.Span) http.HandlerFunc {
+		return func(rw http.ResponseWriter, r *http.Request) {
+			id := getEquipmentId(l)(r)
+
+			e, err := GetById(db, id)
+			if err != nil {
+				l.WithError(err).Errorf("Unable to retrieve equipment %d.", id)
+				rw.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			rw.WriteHeader(http.StatusOK)
+			result := makeEquipmentResult(e)
+			err = json.ToJSON(result, rw)
+			if err != nil {
+				l.WithError(err).Errorf("Unable to write get equipment by id response.")
+			}
 		}
 	}
 }

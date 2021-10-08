@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"atlas-eso/equipment"
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -10,20 +9,20 @@ import (
 	"sync"
 )
 
-func CreateRestService(l *logrus.Logger, db *gorm.DB, ctx context.Context, wg *sync.WaitGroup) {
-	go NewServer(l, ctx, wg, ProduceRoutes(db))
+type RouteInitializer func(*mux.Router, logrus.FieldLogger, *gorm.DB)
+
+func CreateService(l *logrus.Logger, db *gorm.DB, ctx context.Context, wg *sync.WaitGroup, basePath string, initializers ...RouteInitializer) {
+	go NewServer(l, ctx, wg, ProduceRoutes(db, basePath, initializers...))
 }
 
-func ProduceRoutes(db *gorm.DB) func(l logrus.FieldLogger) http.Handler {
+func ProduceRoutes(db *gorm.DB, basePath string, initializers ...RouteInitializer) func(l logrus.FieldLogger) http.Handler {
 	return func(l logrus.FieldLogger) http.Handler {
-		router := mux.NewRouter().PathPrefix("/ms/eso").Subrouter()
+		router := mux.NewRouter().PathPrefix(basePath).Subrouter().StrictSlash(true)
 		router.Use(CommonHeader)
 
-		eRouter := router.PathPrefix("/equipment").Subrouter()
-		eRouter.HandleFunc("", equipment.HandleCreateRandomEquipment(l, db)).Queries("random", "{random}").Methods(http.MethodPost)
-		eRouter.HandleFunc("", equipment.HandleCreateEquipment(l, db)).Methods(http.MethodPost)
-		eRouter.HandleFunc("/{equipmentId}", equipment.HandleGetEquipmentById(l, db)).Methods(http.MethodGet)
-		eRouter.HandleFunc("/{equipmentId}", equipment.HandleDeleteEquipment(l, db)).Methods(http.MethodDelete)
+		for _, initializer := range initializers {
+			initializer(router, l, db)
+		}
 
 		return router
 	}
