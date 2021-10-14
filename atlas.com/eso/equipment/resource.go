@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	CreateRandomEquipment = "create_random_equipment"
-	CreateEquipment       = "create_equipment"
-	GetEquipment          = "get_equipment"
-	DeleteEquipment       = "delete_equipment"
+	createRandomEquipment = "create_random_equipment"
+	createEquipment       = "create_equipment"
+	getEquipment          = "get_equipment"
+	deleteEquipment       = "delete_equipment"
 )
 
 func InitResource(router *mux.Router, l logrus.FieldLogger, db *gorm.DB) {
 	eRouter := router.PathPrefix("/equipment").Subrouter()
-	eRouter.HandleFunc("", rest.RetrieveSpan(CreateRandomEquipment, HandleCreateRandomEquipment(l, db))).Queries("random", "{random}").Methods(http.MethodPost)
-	eRouter.HandleFunc("", rest.RetrieveSpan(CreateEquipment, HandleCreateEquipment(l, db))).Methods(http.MethodPost)
-	eRouter.HandleFunc("/{equipmentId}", rest.RetrieveSpan(GetEquipment, HandleGetEquipment(l, db))).Methods(http.MethodGet)
-	eRouter.HandleFunc("/{equipmentId}", rest.RetrieveSpan(DeleteEquipment, HandleDeleteEquipment(l, db))).Methods(http.MethodDelete)
+	eRouter.HandleFunc("", registerCreateRandomEquipment(l, db)).Queries("random", "{random}").Methods(http.MethodPost)
+	eRouter.HandleFunc("", registerCreateEquipment(l, db)).Methods(http.MethodPost)
+	eRouter.HandleFunc("/{equipmentId}", registerGetEquipment(l, db)).Methods(http.MethodGet)
+	eRouter.HandleFunc("/{equipmentId}", registerDeleteEquipment(l, db)).Methods(http.MethodDelete)
 }
 
 // GenericError is a generic error message returned by a server
@@ -31,24 +31,53 @@ type GenericError struct {
 	Message string `json:"message"`
 }
 
-func HandleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
-	return func(span opentracing.Span) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			id := getEquipmentId(l)(r)
+type equipmentIdHandler func(equipmentId uint32) http.HandlerFunc
 
-			err := DeleteById(l, db)(id)
-			if err != nil {
-				l.WithError(err).Errorf("Unable to delete equipment %d.", id)
-				w.WriteHeader(http.StatusNotFound)
-				return
+func parseEquipmentId(l logrus.FieldLogger, next equipmentIdHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		value, err := strconv.Atoi(vars["equipmentId"])
+		if err != nil {
+			l.WithError(err).Errorf("Error parsing characterId as uint32")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		next(uint32(value))(w, r)
+	}
+}
+
+func registerDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) http.HandlerFunc {
+	return rest.RetrieveSpan(deleteEquipment, func(span opentracing.Span) http.HandlerFunc {
+		return parseEquipmentId(l, func(equipmentId uint32) http.HandlerFunc {
+			return handleDeleteEquipment(l, db)(span)(equipmentId)
+		})
+	})
+}
+
+func handleDeleteEquipment(l logrus.FieldLogger, db *gorm.DB) func(span opentracing.Span) func(equipmentId uint32) http.HandlerFunc {
+	return func(span opentracing.Span) func(equipmentId uint32) http.HandlerFunc {
+		return func(equipmentId uint32) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				err := DeleteById(l, db)(equipmentId)
+				if err != nil {
+					l.WithError(err).Errorf("Unable to delete equipment %d.", equipmentId)
+					w.WriteHeader(http.StatusNotFound)
+					return
+				}
+
+				w.WriteHeader(http.StatusNoContent)
 			}
-
-			w.WriteHeader(http.StatusNoContent)
 		}
 	}
 }
 
-func HandleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+func registerCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) http.HandlerFunc {
+	return rest.RetrieveSpan(createRandomEquipment, func(span opentracing.Span) http.HandlerFunc {
+		return handleCreateRandomEquipment(l, db)(span)
+	})
+}
+
+func handleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
 	return func(span opentracing.Span) http.HandlerFunc {
 		return func(rw http.ResponseWriter, r *http.Request) {
 			ei := &InputDataContainer{}
@@ -85,7 +114,13 @@ func HandleCreateRandomEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHan
 	}
 }
 
-func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
+func registerCreateEquipment(l logrus.FieldLogger, db *gorm.DB) http.HandlerFunc {
+	return rest.RetrieveSpan(createEquipment, func(span opentracing.Span) http.HandlerFunc {
+		return handleCreateEquipment(l, db)(span)
+	})
+}
+
+func handleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
 	return func(span opentracing.Span) http.HandlerFunc {
 		return func(rw http.ResponseWriter, r *http.Request) {
 			ei := &InputDataContainer{}
@@ -124,23 +159,31 @@ func HandleCreateEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
 	}
 }
 
-func HandleGetEquipment(l logrus.FieldLogger, db *gorm.DB) rest.SpanHandler {
-	return func(span opentracing.Span) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-			id := getEquipmentId(l)(r)
+func registerGetEquipment(l logrus.FieldLogger, db *gorm.DB) http.HandlerFunc {
+	return rest.RetrieveSpan(getEquipment, func(span opentracing.Span) http.HandlerFunc {
+		return parseEquipmentId(l, func(equipmentId uint32) http.HandlerFunc {
+			return handleGetEquipment(l, db)(span)(equipmentId)
+		})
+	})
+}
 
-			e, err := GetById(db, id)
-			if err != nil {
-				l.WithError(err).Errorf("Unable to retrieve equipment %d.", id)
-				rw.WriteHeader(http.StatusNotFound)
-				return
-			}
+func handleGetEquipment(l logrus.FieldLogger, db *gorm.DB) func(span opentracing.Span) func(equipmentId uint32) http.HandlerFunc {
+	return func(span opentracing.Span) func(equipmentId uint32) http.HandlerFunc {
+		return func(equipmentId uint32) http.HandlerFunc {
+			return func(rw http.ResponseWriter, r *http.Request) {
+				e, err := GetById(db, equipmentId)
+				if err != nil {
+					l.WithError(err).Errorf("Unable to retrieve equipment %d.", equipmentId)
+					rw.WriteHeader(http.StatusNotFound)
+					return
+				}
 
-			rw.WriteHeader(http.StatusOK)
-			result := makeEquipmentResult(e)
-			err = json.ToJSON(result, rw)
-			if err != nil {
-				l.WithError(err).Errorf("Unable to write get equipment by id response.")
+				rw.WriteHeader(http.StatusOK)
+				result := makeEquipmentResult(e)
+				err = json.ToJSON(result, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Unable to write get equipment by id response.")
+				}
 			}
 		}
 	}
@@ -173,16 +216,4 @@ func makeEquipmentResult(e *Model) DataContainer {
 		},
 	}
 	return result
-}
-
-func getEquipmentId(l logrus.FieldLogger) func(r *http.Request) uint32 {
-	return func(r *http.Request) uint32 {
-		vars := mux.Vars(r)
-		value, err := strconv.Atoi(vars["equipmentId"])
-		if err != nil {
-			l.WithError(err).Errorf("Error parsing characterId as uint32")
-			return 0
-		}
-		return uint32(value)
-	}
 }
