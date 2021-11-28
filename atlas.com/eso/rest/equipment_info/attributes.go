@@ -1,6 +1,9 @@
 package equipment_info
 
-import "atlas-eso/rest/response"
+import (
+	"atlas-eso/rest/response"
+	"encoding/json"
+)
 
 type EquipmentInfoDataContainer struct {
 	data     response.DataSegment
@@ -32,27 +35,40 @@ type EquipmentInfoAttributes struct {
 	Slots         uint16 `json:"slots"`
 }
 
-func (a *EquipmentInfoDataContainer) UnmarshalJSON(data []byte) error {
+func (c *EquipmentInfoDataContainer) MarshalJSON() ([]byte, error) {
+	t := struct {
+		Data     interface{} `json:"data"`
+		Included interface{} `json:"included"`
+	}{}
+	if len(c.data) == 1 {
+		t.Data = c.data[0]
+	} else {
+		t.Data = c.data
+	}
+	return json.Marshal(t)
+}
+
+func (c *EquipmentInfoDataContainer) UnmarshalJSON(data []byte) error {
 	d, i, err := response.UnmarshalRoot(data, response.MapperFunc(EmptyEquipmentInfoData))
 	if err != nil {
 		return err
 	}
 
-	a.data = d
-	a.included = i
+	c.data = d
+	c.included = i
 	return nil
 }
 
-func (a *EquipmentInfoDataContainer) Data() *EquipmentInfoData {
-	if len(a.data) >= 1 {
-		return a.data[0].(*EquipmentInfoData)
+func (c *EquipmentInfoDataContainer) Data() *EquipmentInfoData {
+	if len(c.data) >= 1 {
+		return c.data[0].(*EquipmentInfoData)
 	}
 	return nil
 }
 
-func (a *EquipmentInfoDataContainer) DataList() []EquipmentInfoData {
+func (c *EquipmentInfoDataContainer) DataList() []EquipmentInfoData {
 	var r = make([]EquipmentInfoData, 0)
-	for _, x := range a.data {
+	for _, x := range c.data {
 		r = append(r, *x.(*EquipmentInfoData))
 	}
 	return r
