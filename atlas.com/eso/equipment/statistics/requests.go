@@ -12,6 +12,6 @@ const (
 	itemInformationById                 = itemInformationResource + "%d"
 )
 
-func GetById(id uint32) requests.Request[attributes] {
+func requestById(id uint32) requests.Request[attributes] {
 	return requests.MakeGetRequest[attributes](fmt.Sprintf(itemInformationById, id))
 }

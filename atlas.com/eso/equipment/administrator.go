@@ -5,13 +5,13 @@ import (
 )
 
 func delete(db *gorm.DB, equipmentId uint32) error {
-	return db.Delete(&equipment{ID: equipmentId}).Error
+	return db.Delete(&entity{ID: equipmentId}).Error
 }
 
 func create(db *gorm.DB, itemId uint32, strength uint16, dexterity uint16, intelligence uint16, luck uint16,
 	hp uint16, mp uint16, weaponAttack uint16, magicAttack uint16, weaponDefense uint16, magicDefense uint16,
-	accuracy uint16, avoidability uint16, hands uint16, speed uint16, jump uint16, slots uint16) (*Model, error) {
-	e := &equipment{
+	accuracy uint16, avoidability uint16, hands uint16, speed uint16, jump uint16, slots uint16) (Model, error) {
+	e := &entity{
 		ItemId:        itemId,
 		Strength:      strength,
 		Dexterity:     dexterity,
@@ -33,13 +33,13 @@ func create(db *gorm.DB, itemId uint32, strength uint16, dexterity uint16, intel
 
 	err := db.Create(e).Error
 	if err != nil {
-		return nil, err
+		return Model{}, err
 	}
 
-	return makeEquipment(e), nil
+	return makeEquipment(*e)
 }
 
-func makeEquipment(e *equipment) *Model {
+func makeEquipment(e entity) (Model, error) {
 	r := NewBuilder(e.ID).
 		SetItemId(e.ItemId).
 		SetStrength(e.Strength).
@@ -59,5 +59,5 @@ func makeEquipment(e *equipment) *Model {
 		SetJump(e.Jump).
 		SetSlots(e.Slots).
 		Build()
-	return &r
+	return r, nil
 }

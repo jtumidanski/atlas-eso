@@ -3,10 +3,10 @@ package equipment
 import "gorm.io/gorm"
 
 func Migration(db *gorm.DB) error {
-	return db.AutoMigrate(&equipment{})
+	return db.AutoMigrate(&entity{})
 }
 
-type equipment struct {
+type entity struct {
 	ID            uint32 `gorm:"primaryKey;autoIncrement;not null"`
 	ItemId        uint32 `gorm:"not null;default=0"`
 	Strength      uint16 `gorm:"not null;default=0"`
@@ -25,4 +25,8 @@ type equipment struct {
 	Speed         uint16 `gorm:"not null;default=0"`
 	Jump          uint16 `gorm:"not null;default=0"`
 	Slots         uint16 `gorm:"not null;default=0"`
+}
+
+func (e entity) TableName() string {
+	return "equipment"
 }

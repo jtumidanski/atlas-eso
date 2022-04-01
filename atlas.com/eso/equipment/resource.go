@@ -171,7 +171,7 @@ func handleGetEquipment(l logrus.FieldLogger, db *gorm.DB) func(span opentracing
 	return func(span opentracing.Span) func(equipmentId uint32) http.HandlerFunc {
 		return func(equipmentId uint32) http.HandlerFunc {
 			return func(rw http.ResponseWriter, r *http.Request) {
-				e, err := GetById(db, equipmentId)
+				e, err := GetById(l, db, span)(equipmentId)
 				if err != nil {
 					l.WithError(err).Errorf("Unable to retrieve equipment %d.", equipmentId)
 					rw.WriteHeader(http.StatusNotFound)
@@ -189,7 +189,7 @@ func handleGetEquipment(l logrus.FieldLogger, db *gorm.DB) func(span opentracing
 	}
 }
 
-func makeEquipmentResult(e *Model) DataContainer {
+func makeEquipmentResult(e Model) DataContainer {
 	result := DataContainer{
 		Data: DataBody{
 			Id:   strconv.FormatUint(uint64(e.Id()), 10),

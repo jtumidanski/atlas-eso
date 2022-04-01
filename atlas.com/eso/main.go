@@ -28,7 +28,7 @@ func main() {
 		l.WithError(err).Fatal("Unable to initialize tracer.")
 	}
 	defer func(tc io.Closer) {
-		err := tc.Close()
+		err = tc.Close()
 		if err != nil {
 			l.WithError(err).Errorf("Unable to close tracer.")
 		}
